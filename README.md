@@ -68,16 +68,16 @@ You can install Postman via this website: https://www.postman.com/downloads/
     -   [V] Commit: `Implement list_all_as_string function in Notification repository.`
     -   [V] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
 -   **STAGE 3: Implement services and controllers**
-    -   [ ] Commit: `Create Notification service struct skeleton.`
-    -   [ ] Commit: `Implement subscribe function in Notification service.`
-    -   [ ] Commit: `Implement subscribe function in Notification controller.`
-    -   [ ] Commit: `Implement unsubscribe function in Notification service.`
-    -   [ ] Commit: `Implement unsubscribe function in Notification controller.`
-    -   [ ] Commit: `Implement receive_notification function in Notification service.`
-    -   [ ] Commit: `Implement receive function in Notification controller.`
-    -   [ ] Commit: `Implement list_messages function in Notification service.`
-    -   [ ] Commit: `Implement list function in Notification controller.`
-    -   [ ] Write answers of your learning module's "Reflection Subscriber-2" questions in this README.
+    -   [V] Commit: `Create Notification service struct skeleton.`
+    -   [V] Commit: `Implement subscribe function in Notification service.`
+    -   [V] Commit: `Implement subscribe function in Notification controller.`
+    -   [V] Commit: `Implement unsubscribe function in Notification service.`
+    -   [V] Commit: `Implement unsubscribe function in Notification controller.`
+    -   [V] Commit: `Implement receive_notification function in Notification service.`
+    -   [V] Commit: `Implement receive function in Notification controller.`
+    -   [v] Commit: `Implement list_messages function in Notification service.`
+    -   [V] Commit: `Implement list function in Notification controller.`
+    -   [V] Write answers of your learning module's "Reflection Subscriber-2" questions in this README.
 
 ## Your Reflections
 This is the place for you to write reflections:
@@ -118,3 +118,48 @@ Karena Rust tidak mengizinkan inisialisasi variabel statis yang tidak konstan pa
 Dibandingkan dengan Java, di mana mutasi variabel statis lebih longgar dan tidak memerlukan pertimbangan ekstra tentang keselamatan konkurensi pada level bahasa, Rust mengambil pendekatan yang lebih konservatif untuk memastikan bahwa kode yang ditulis adalah aman secara konkurensi dan bebas dari kesalahan umum pemrograman sistem. Ini adalah bagian dari upaya Rust untuk menawarkan jaminan keamanan memori yang lebih kuat sambil tetap memungkinkan performa yang tinggi.
 
 #### Reflection Subscriber-2
+1. Have you explored things outside of the steps in the tutorial, for example: src/lib.rs? If not, explain why you did not do so. If yes, explain things that you have learned from those other parts of code.<br/>
+
+Dari kode yang disediakan dalam src/lib.rs, ada beberapa poin pembelajaran penting yang dapat diambil, terutama mengenai bagaimana Rust mengelola konfigurasi, variabel statis, dan penanganan kesalahan:
+
+- Penggunaan lazy_static untuk Inisialisasi Variabel Statis:
+Rust memerlukan bahwa variabel statis harus memiliki nilai yang diketahui pada waktu kompilasi kecuali jika menggunakan crate seperti lazy_static. Ini memungkinkan inisialisasi variabel statis yang membutuhkan pemrosesan atau tidak bisa ditentukan secara langsung pada waktu kompilasi, seperti klien HTTP REQWEST_CLIENT dan konfigurasi aplikasi APP_CONFIG.
+
+- Pengelolaan Konfigurasi dengan dotenvy dan Figment:
+Crate dotenvy digunakan untuk memuat variabel lingkungan dari file .env, memudahkan pengelolaan konfigurasi yang sensitif atau spesifik lingkungan tanpa harus mengkodkannya langsung dalam kode sumber.
+Figment dari Rocket digunakan untuk menggabungkan berbagai sumber konfigurasi, seperti nilai default dan variabel lingkungan, yang memungkinkan fleksibilitas tinggi dalam pengelolaan konfigurasi aplikasi.
+
+- Penggunaan Getters dari Crate getset:
+Menggunakan macro #[getset(get = "pub with_prefix")] memudahkan pembuatan method getter untuk field-field dalam struct AppConfig, meningkatkan keamanan dan enkapsulasi data.
+
+- Penanganan Kesalahan dengan Custom Error Types:
+Definisi type Result<T, E = Error> menunjukkan customisasi dari type Result yang sering digunakan dalam Rust untuk penanganan kesalahan. Ini memudahkan penggunaan type error khusus aplikasi ini.
+Error di sini didefinisikan sebagai Custom<Json<ErrorResponse>>, memberikan cara standarisasi untuk merespons kesalahan dalam format JSON yang konsisten di seluruh aplikasi.
+
+2. Since you have completed the tutorial by now and have tried to test your notification system by spawning multiple instances of Receiver, explain how Observer pattern eases you to plug in more subscribers. How about spawning more than one instance of Main app, will it still be easy enough to add to the system?<br/>
+
+Observer pattern memang dirancang untuk memudahkan proses penambahan atau pengurangan "subscribers" (penerima) dalam sistem, tanpa memerlukan perubahan pada "publisher" (pengirim). Ini adalah salah satu kelebihan utama dari pola desain ini, yang membuatnya sangat cocok untuk sistem di mana jumlah penerima bisa berubah-ubah seiring waktu, seperti dalam sistem notifikasi.
+
+- Mempermudah Penambahan Subscriber
+Dalam konteks sistem notifikasi yang kita bangun, penambahan subscriber baru sangat mudah. Setiap instance dari "Receiver" hanya perlu mendaftarkan diri menggunakan metode subscribe dan secara otomatis ditambahkan ke dalam daftar subscriber. Mereka akan langsung mulai menerima pembaruan dari "Main app" (publisher) tanpa memerlukan perubahan pada sisi publisher.
+
+- Spawning Lebih dari Satu Instance dari Main App
+Mengenai pertanyaan apakah akan tetap mudah menambahkan lebih dari satu instance dari "Main app", hal ini bergantung pada bagaimana sistem dirancang:
+
+Jika semua instance dari "Main app" menggunakan mekanisme pusat untuk mengelola subscriber, seperti database terpusat atau layanan manajemen subscriber, maka penambahan instance "Main app" bisa dilakukan dengan relatif mudah. Semua instance bisa berbagi informasi tentang subscriber yang terdaftar dan berkoordinasi untuk mengirim notifikasi.
+
+Namun, jika tiap instance dari "Main app" mengelola subscriber-nya sendiri secara independen, maka akan lebih rumit untuk memastikan bahwa semua subscriber menerima notifikasi yang konsisten. Hal ini bisa memerlukan implementasi mekanisme sinkronisasi atau replikasi informasi subscriber antar instance.
+
+3. Have you tried to make your own Tests, or enhance documentation on your Postman collection? If you have tried those features, tell us whether it is useful for your work (it can be your tutorial work or your Group Project).<br/>
+
+Mengintegrasikan Postman untuk membuat tes atau meningkatkan dokumentasi koleksi bisa sangat membantu. Meskipun saya tidak melakukan ini secara langsung, saya bisa menjelaskan bagaimana fitur-fitur tersebut bermanfaat:
+
+- Membuat Tes di Postman
+Membuat tes di Postman memungkinkan kita untuk secara otomatis memverifikasi respon dari API sesuai dengan ekspektasi. Hal ini termasuk memeriksa status kode, format respon, dan keberadaan nilai tertentu dalam respon. Dalam konteks proyek kelompok atau tutorial, ini berarti kita bisa dengan cepat memastikan bahwa perubahan yang kita buat tidak memecah fungsi yang ada dan bahwa API berperilaku seperti yang diharapkan.
+
+Keuntungan: Pengujian otomatis ini sangat berguna untuk memvalidasi kontrak API secara konsisten, yang membantu dalam pengembangan yang berkelanjutan dan penerapan CI/CD.
+
+- Meningkatkan Dokumentasi di Postman
+Dokumentasi yang baik adalah kunci untuk API yang bisa digunakan dan dipelihara dengan baik. Postman memungkinkan eksport dokumentasi koleksi yang bisa diakses oleh pengembang frontend, tester, atau pihak ketiga yang menggunakan API tersebut.
+
+Keuntungan: Dokumentasi yang terjaga dan mudah diakses mempercepat proses integrasi dan meminimalisir kesalahpahaman tentang cara menggunakan API. Ini sangat penting dalam proyek kelompok di mana komunikasi yang efektif antar tim bisa sangat meningkatkan efisiensi pengembangan.
