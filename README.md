@@ -61,12 +61,12 @@ You can install Postman via this website: https://www.postman.com/downloads/
 ## Mandatory Checklists (Subscriber)
 -   [ ] Clone https://gitlab.com/ichlaffterlalu/bambangshop-receiver to a new repository.
 -   **STAGE 1: Implement models and repositories**
-    -   [ ] Commit: `Create Notification model struct.`
-    -   [ ] Commit: `Create SubscriberRequest model struct.`
-    -   [ ] Commit: `Create Notification database and Notification repository struct skeleton.`
-    -   [ ] Commit: `Implement add function in Notification repository.`
-    -   [ ] Commit: `Implement list_all_as_string function in Notification repository.`
-    -   [ ] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
+    -   [V] Commit: `Create Notification model struct.`
+    -   [V] Commit: `Create SubscriberRequest model struct.`
+    -   [V] Commit: `Create Notification database and Notification repository struct skeleton.`
+    -   [V] Commit: `Implement add function in Notification repository.`
+    -   [V] Commit: `Implement list_all_as_string function in Notification repository.`
+    -   [V] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
 -   **STAGE 3: Implement services and controllers**
     -   [ ] Commit: `Create Notification service struct skeleton.`
     -   [ ] Commit: `Implement subscribe function in Notification service.`
@@ -85,5 +85,36 @@ This is the place for you to write reflections:
 ### Mandatory (Subscriber) Reflections
 
 #### Reflection Subscriber-1
+1. In this tutorial, we used RwLock<> to synchronise the use of Vec of Notifications. Explain why it is necessary for this case, and explain why we do not use Mutex<> instead?<br/>
+
+Dalam tutorial ini, penggunaan RwLock<> untuk mensinkronisasi penggunaan Vec dari notifikasi sangat penting karena memungkinkan akses konkuren yang lebih efisien ke data. Berikut penjelasan mengapa RwLock<> diperlukan dan alasan memilihnya dibandingkan Mutex<>:
+
+Mengapa RwLock<> Diperlukan?
+RwLock<> (Read-Write Lock) memungkinkan banyak pembaca mengakses data secara simultan, selama tidak ada penulis yang sedang menulis. Jika penulis ingin mengakses data, ia harus menunggu sampai tidak ada pembaca atau penulis lain yang aktif. Ini ideal untuk kasus di mana operasi baca jauh lebih sering terjadi daripada operasi tulis, seperti dalam kasus pengelolaan notifikasi di mana data mungkin sering dibaca (misalnya, untuk menampilkan notifikasi) tetapi tidak terlalu sering diubah atau ditambahkan.
+
+Mengapa Tidak Menggunakan Mutex<>?
+Mutex<> (Mutual Exclusion) memberikan akses eksklusif ke data bagi thread yang memegang kunci. Ini berarti jika satu thread sedang mengakses data, thread lain harus menunggu sampai thread pertama selesai, tanpa memandang apakah operasi tersebut adalah baca atau tulis. Ini bisa mengakibatkan kebuntuan atau pengurangan kinerja dalam skenario di mana banyak thread hanya ingin membaca data dan tidak ada konflik penulisan.
+
+Perbandingan:
+Efisiensi: RwLock<> lebih efisien dalam skenario dengan operasi baca yang dominan karena memungkinkan akses baca bersamaan. Mutex<>, di sisi lain, membatasi akses ke satu thread pada satu waktu, yang dapat menyebabkan pemborosan waktu menunggu yang tidak perlu dalam kasus baca-banyak.
+
+Penggunaan Kasus: RwLock<> ideal untuk struktur data yang jarang diubah tetapi sering dibaca. Mutex<> lebih cocok untuk situasi di mana akses eksklusif ke data penting atau di mana operasi baca dan tulis terjadi dengan frekuensi yang hampir sama.
+
+Dalam konteks tutorial untuk sistem notifikasi, di mana kemungkinan banyak thread akan sering membaca informasi notifikasi tanpa sering memodifikasinya, penggunaan RwLock<> memberikan keseimbangan yang baik antara keselamatan konkurensi dan kinerja, menjadikannya pilihan yang lebih baik dibandingkan Mutex<>.
+
+2. In this tutorial, we used lazy_static external library to define Vec and DashMap as a “static” variable. Compared to Java where we can mutate the content of a static variable via a static function, why did not Rust allow us to do so?<br/>
+##### Keamanan Memori
+
+Rust sangat berfokus pada keamanan memori dan memastikan bahwa akses ke memori dilakukan dengan cara yang aman untuk mencegah _data races_, _dangling pointers_, dan masalah lain yang sering terjadi dalam pemrograman sistem. Mutasi global atau variabel statis secara langsung bisa menyebabkan kondisi balapan (_race conditions_) jika diakses oleh beberapa _thread_ secara bersamaan tanpa sinkronisasi yang tepat.
+
+##### Keselamatan Konkurensi
+
+Untuk menjamin keselamatan konkurensi, Rust membatasi cara variabel statis dimutasi. Rust mengharuskan semua akses ke variabel statis untuk dianggap tidak aman (`unsafe`) kecuali jika menggunakan tipe yang memastikan keselamatan konkurensi, seperti `Mutex` atau `RwLock`. Hal ini memaksa pengembang untuk secara eksplisit memikirkan tentang sinkronisasi dan keselamatan konkurensi saat mengakses dan memodifikasi data secara global.
+
+##### Penggunaan `lazy_static`
+
+Karena Rust tidak mengizinkan inisialisasi variabel statis yang tidak konstan pada waktu kompilasi, `lazy_static` digunakan untuk mendefinisikan variabel yang memerlukan inisialisasi dinamis atau yang tidak bisa ditentukan nilai awalnya pada waktu kompilasi. `lazy_static` menjamin bahwa inisialisasi dilakukan secara aman pada saat runtime saat variabel tersebut pertama kali diakses.
+
+Dibandingkan dengan Java, di mana mutasi variabel statis lebih longgar dan tidak memerlukan pertimbangan ekstra tentang keselamatan konkurensi pada level bahasa, Rust mengambil pendekatan yang lebih konservatif untuk memastikan bahwa kode yang ditulis adalah aman secara konkurensi dan bebas dari kesalahan umum pemrograman sistem. Ini adalah bagian dari upaya Rust untuk menawarkan jaminan keamanan memori yang lebih kuat sambil tetap memungkinkan performa yang tinggi.
 
 #### Reflection Subscriber-2
